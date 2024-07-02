@@ -22,7 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type OrderSeriviceClient interface {
-	CreateOrder(ctx context.Context, in *CreaetOrderRequest, opts ...grpc.CallOption) (*Order, error)
+	CreateOrder(ctx context.Context, in *CreateOrderRequest, opts ...grpc.CallOption) (*Order, error)
 }
 
 type orderSeriviceClient struct {
@@ -33,7 +33,7 @@ func NewOrderSeriviceClient(cc grpc.ClientConnInterface) OrderSeriviceClient {
 	return &orderSeriviceClient{cc}
 }
 
-func (c *orderSeriviceClient) CreateOrder(ctx context.Context, in *CreaetOrderRequest, opts ...grpc.CallOption) (*Order, error) {
+func (c *orderSeriviceClient) CreateOrder(ctx context.Context, in *CreateOrderRequest, opts ...grpc.CallOption) (*Order, error) {
 	out := new(Order)
 	err := c.cc.Invoke(ctx, "/api.OrderSerivice/CreateOrder", in, out, opts...)
 	if err != nil {
@@ -46,7 +46,7 @@ func (c *orderSeriviceClient) CreateOrder(ctx context.Context, in *CreaetOrderRe
 // All implementations must embed UnimplementedOrderSeriviceServer
 // for forward compatibility
 type OrderSeriviceServer interface {
-	CreateOrder(context.Context, *CreaetOrderRequest) (*Order, error)
+	CreateOrder(context.Context, *CreateOrderRequest) (*Order, error)
 	mustEmbedUnimplementedOrderSeriviceServer()
 }
 
@@ -54,7 +54,7 @@ type OrderSeriviceServer interface {
 type UnimplementedOrderSeriviceServer struct {
 }
 
-func (UnimplementedOrderSeriviceServer) CreateOrder(context.Context, *CreaetOrderRequest) (*Order, error) {
+func (UnimplementedOrderSeriviceServer) CreateOrder(context.Context, *CreateOrderRequest) (*Order, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateOrder not implemented")
 }
 func (UnimplementedOrderSeriviceServer) mustEmbedUnimplementedOrderSeriviceServer() {}
@@ -71,7 +71,7 @@ func RegisterOrderSeriviceServer(s grpc.ServiceRegistrar, srv OrderSeriviceServe
 }
 
 func _OrderSerivice_CreateOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreaetOrderRequest)
+	in := new(CreateOrderRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -83,7 +83,7 @@ func _OrderSerivice_CreateOrder_Handler(srv interface{}, ctx context.Context, de
 		FullMethod: "/api.OrderSerivice/CreateOrder",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrderSeriviceServer).CreateOrder(ctx, req.(*CreaetOrderRequest))
+		return srv.(OrderSeriviceServer).CreateOrder(ctx, req.(*CreateOrderRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -98,6 +98,92 @@ var OrderSerivice_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateOrder",
 			Handler:    _OrderSerivice_CreateOrder_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "api/oms.proto",
+}
+
+// StockServiceClient is the client API for StockService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type StockServiceClient interface {
+	CheckIfItemIsInStock(ctx context.Context, in *CheckIfItemIsInStockRequest, opts ...grpc.CallOption) (*CheckIfItemIsInStockResponse, error)
+}
+
+type stockServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewStockServiceClient(cc grpc.ClientConnInterface) StockServiceClient {
+	return &stockServiceClient{cc}
+}
+
+func (c *stockServiceClient) CheckIfItemIsInStock(ctx context.Context, in *CheckIfItemIsInStockRequest, opts ...grpc.CallOption) (*CheckIfItemIsInStockResponse, error) {
+	out := new(CheckIfItemIsInStockResponse)
+	err := c.cc.Invoke(ctx, "/api.StockService/CheckIfItemIsInStock", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// StockServiceServer is the server API for StockService service.
+// All implementations must embed UnimplementedStockServiceServer
+// for forward compatibility
+type StockServiceServer interface {
+	CheckIfItemIsInStock(context.Context, *CheckIfItemIsInStockRequest) (*CheckIfItemIsInStockResponse, error)
+	mustEmbedUnimplementedStockServiceServer()
+}
+
+// UnimplementedStockServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedStockServiceServer struct {
+}
+
+func (UnimplementedStockServiceServer) CheckIfItemIsInStock(context.Context, *CheckIfItemIsInStockRequest) (*CheckIfItemIsInStockResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CheckIfItemIsInStock not implemented")
+}
+func (UnimplementedStockServiceServer) mustEmbedUnimplementedStockServiceServer() {}
+
+// UnsafeStockServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to StockServiceServer will
+// result in compilation errors.
+type UnsafeStockServiceServer interface {
+	mustEmbedUnimplementedStockServiceServer()
+}
+
+func RegisterStockServiceServer(s grpc.ServiceRegistrar, srv StockServiceServer) {
+	s.RegisterService(&StockService_ServiceDesc, srv)
+}
+
+func _StockService_CheckIfItemIsInStock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CheckIfItemIsInStockRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StockServiceServer).CheckIfItemIsInStock(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.StockService/CheckIfItemIsInStock",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StockServiceServer).CheckIfItemIsInStock(ctx, req.(*CheckIfItemIsInStockRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// StockService_ServiceDesc is the grpc.ServiceDesc for StockService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var StockService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "api.StockService",
+	HandlerType: (*StockServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "CheckIfItemIsInStock",
+			Handler:    _StockService_CheckIfItemIsInStock_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

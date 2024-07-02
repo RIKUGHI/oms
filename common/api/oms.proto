@@ -9,10 +9,11 @@ message Order {
   string customerID = 2;
   string Status = 3;
   repeated Item Items = 4;
+  string PaymentLink = 5;
 }
 
 service OrderSerivice {
-  rpc CreateOrder(CreaetOrderRequest) returns (Order);
+  rpc CreateOrder(CreateOrderRequest) returns (Order);
 }
 
 message Item {
@@ -27,7 +28,20 @@ message ItemsWithQuantity {
   int32 Quantity = 2;
 }
 
-message CreaetOrderRequest {
+message CreateOrderRequest {
   string customerID = 1;
   repeated ItemsWithQuantity Items = 2;
+}
+
+service StockService {
+  rpc CheckIfItemIsInStock(CheckIfItemIsInStockRequest) returns (CheckIfItemIsInStockResponse);
+}
+
+message CheckIfItemIsInStockRequest {
+  repeated ItemsWithQuantity Items = 1;
+}
+
+message CheckIfItemIsInStockResponse {
+  bool InStock = 1;
+  repeated Item Items = 2;
 }

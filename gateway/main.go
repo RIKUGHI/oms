@@ -8,18 +8,15 @@ import (
 
 	_ "github.com/joho/godotenv/autoload"
 	common "github.com/rikughi/commons"
-	pb "github.com/rikughi/commons/api"
 	"github.com/rikughi/commons/discovery"
 	"github.com/rikughi/commons/discovery/consul"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	"github.com/rikughi/omsv2-gateway/gateway"
 )
 
 var (
-	serviceName       = "gateway"
-	httpAddr          = common.EnvString("HTTP_ADDR", ":8080")
-	consulAddr        = common.EnvString("CONSUL_ADDR", "localhost:8500")
-	ordersServiceAddr = "localhost:2000"
+	serviceName = "gateway"
+	httpAddr    = common.EnvString("HTTP_ADDR", ":8080")
+	consulAddr  = common.EnvString("CONSUL_ADDR", "localhost:8500")
 )
 
 func main() {
@@ -45,18 +42,11 @@ func main() {
 
 	defer registry.Deregister(ctx, instanceID, serviceName)
 
-	conn, err := grpc.Dial(ordersServiceAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Fatalf("Failed to dial server: %v", err)
-	}
-	defer conn.Close()
-
-	log.Println("Dialing orders service at", ordersServiceAddr)
-
-	c := pb.NewOrderSeriviceClient(conn)
-
 	mux := http.NewServeMux()
-	handler := NewHandler(c)
+
+	ordersGateway := gateway.NewGRPCGateway(registry)
+
+	handler := NewHandler(ordersGateway)
 	handler.registerRoutes(mux)
 
 	log.Printf("Starting HTTP server at %s", httpAddr)

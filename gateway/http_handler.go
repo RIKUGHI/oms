@@ -6,19 +6,20 @@ import (
 
 	common "github.com/rikughi/commons"
 	pb "github.com/rikughi/commons/api"
+	"github.com/rikughi/omsv2-gateway/gateway"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 type handler struct {
-	client pb.OrderSeriviceClient
+	gateway gateway.OrderGateway
 }
 
-func NewHandler(client pb.OrderSeriviceClient) *handler {
-	return &handler{client}
+func NewHandler(gateway gateway.OrderGateway) *handler {
+	return &handler{gateway}
 }
 
-func (h *handler) registerRoutes(mux *http.ServeMux)  {
+func (h *handler) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/customers/{customerID}/orders", h.HandleCreateOrder)
 }
 
@@ -35,10 +36,10 @@ func (h *handler) HandleCreateOrder(w http.ResponseWriter, r *http.Request) {
 		common.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	
-	o, err := h.client.CreateOrder(r.Context(), &pb.CreaetOrderRequest{
+
+	o, err := h.gateway.CreateOrder(r.Context(), &pb.CreateOrderRequest{
 		CustomerID: customerId,
-		Items: items,
+		Items:      items,
 	})
 	rStatus := status.Convert(err)
 	if rStatus != nil {
@@ -50,7 +51,7 @@ func (h *handler) HandleCreateOrder(w http.ResponseWriter, r *http.Request) {
 		common.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	
+
 	common.WriteJSON(w, http.StatusOK, o)
 }
 

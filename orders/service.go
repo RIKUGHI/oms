@@ -2,42 +2,59 @@ package main
 
 import (
 	"context"
-	"log"
 
 	common "github.com/rikughi/commons"
 	pb "github.com/rikughi/commons/api"
+	"github.com/rikughi/omsv2-orders/gateway"
 )
 
 type service struct {
-	store OrdersStore
+	store   OrdersStore
+	gateway gateway.StockGateway
 }
 
-func NewService(store OrdersStore) *service {
-	return &service{store}
+func NewService(store OrdersStore, gateway gateway.StockGateway) *service {
+	return &service{store, gateway}
 }
 
-func (s *service) CreateOrder(context.Context) error {
-	return nil
+func (s *service) CreateOrder(ctx context.Context, p *pb.CreateOrderRequest, items []*pb.Item) (*pb.Order, error) {
+	id, err := s.store.Create(ctx, Order{
+		CustomerID:  p.CustomerID,
+		Status:      "pending",
+		Items:       items,
+		PaymentLink: "",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	o := &pb.Order{
+		ID:         id.Hex(),
+		CustomerID: p.CustomerID,
+		Status:     "pending",
+		Items:      items,
+	}
+
+	return o, nil
 }
 
-func (s *service) ValidateOrder(ctx context.Context, p *pb.CreaetOrderRequest) error {
+func (s *service) ValidateOrder(ctx context.Context, p *pb.CreateOrderRequest) ([]*pb.Item, error) {
 	if len(p.Items) == 0 {
-		return common.ErrNoItems
+		return nil, common.ErrNoItems
 	}
 
 	mergedItems := mergeItemsQuantities(p.Items)
-	log.Print(mergedItems)
 
 	// validate with the stock service
-	// inStock, items, err := s.gateway.CheckIfItemIsInStock(ctx, p.CustomerID, mergedItems)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// if !inStock {
-	// 	return items, common.ErrNoStock
-	// }
+	inStock, items, err := s.gateway.CheckIfItemIsInStock(ctx, p.CustomerID, mergedItems)
+	if err != nil {
+		return nil, err
+	}
+	if !inStock {
+		return items, common.ErrNoStock
+	}
 
-	return nil
+	return items, nil
 }
 
 func mergeItemsQuantities(items []*pb.ItemsWithQuantity) []*pb.ItemsWithQuantity {

@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 
 	pb "github.com/rikughi/commons/api"
 	"google.golang.org/grpc"
@@ -21,10 +20,15 @@ func NewGRPCHandler(grpcServer *grpc.Server, service OrdersService) {
 	pb.RegisterOrderSeriviceServer(grpcServer, handler)
 }
 
-func (h *grpcHandler) CreateOrder(ctx context.Context, p *pb.CreaetOrderRequest) (*pb.Order, error) {
-	log.Printf("New order received! Order %v", p)
-	o := &pb.Order{
-		ID: "42",
+func (h *grpcHandler) CreateOrder(ctx context.Context, p *pb.CreateOrderRequest) (*pb.Order, error) {
+	items, err := h.service.ValidateOrder(ctx, p)
+	if err != nil {
+		return nil, err
+	}
+
+	o, err := h.service.CreateOrder(ctx, p, items)
+	if err != nil {
+		return nil, err
 	}
 
 	return o, nil
