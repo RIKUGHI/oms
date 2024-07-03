@@ -2,11 +2,14 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	common "github.com/rikughi/commons"
 	pb "github.com/rikughi/commons/api"
 	"github.com/rikughi/omsv2-gateway/gateway"
+	"go.opentelemetry.io/otel"
+	otelCodes "go.opentelemetry.io/otel/codes"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -20,7 +23,10 @@ func NewHandler(gateway gateway.OrderGateway) *handler {
 }
 
 func (h *handler) registerRoutes(mux *http.ServeMux) {
+	mux.Handle("/", http.FileServer(http.Dir("public")))
+
 	mux.HandleFunc("POST /api/customers/{customerID}/orders", h.HandleCreateOrder)
+	mux.HandleFunc("GET /api/customers/{customerID}/orders/{orderID}", h.handleGetOrder)
 }
 
 func (h *handler) HandleCreateOrder(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +58,12 @@ func (h *handler) HandleCreateOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	common.WriteJSON(w, http.StatusOK, o)
+	res := CreateOrderRequest{
+		Order:         o,
+		RedirectToURL: fmt.Sprintf("http://localhost:8080/success.html?customerID=%s&orderID=%s", o.CustomerID, o.ID),
+	}
+
+	common.WriteJSON(w, http.StatusOK, res)
 }
 
 func validateItems(items []*pb.ItemsWithQuantity) error {
@@ -71,4 +82,30 @@ func validateItems(items []*pb.ItemsWithQuantity) error {
 	}
 
 	return nil
+}
+
+func (h *handler) handleGetOrder(w http.ResponseWriter, r *http.Request) {
+	customerID := r.PathValue("customerID")
+	orderID := r.PathValue("orderID")
+
+	// Create a tracer span
+	tr := otel.Tracer("http")
+	ctx, span := tr.Start(r.Context(), fmt.Sprintf("%s %s", r.Method, r.RequestURI))
+	defer span.End()
+
+	o, err := h.gateway.GetOrder(ctx, orderID, customerID)
+	rStatus := status.Convert(err)
+	if rStatus != nil {
+		span.SetStatus(otelCodes.Error, err.Error())
+
+		if rStatus.Code() != codes.InvalidArgument {
+			common.WriteError(w, http.StatusBadRequest, rStatus.Message())
+			return
+		}
+
+		common.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	common.WriteJSON(w, http.StatusOK, o)
 }

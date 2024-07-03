@@ -17,13 +17,13 @@ func NewStore() *Store {
 			"2": {
 				ID:       "2",
 				Name:     "Potato Chips",
-				PriceID:  "price_1PBaC2RoHcnwnsLnYLWpx1CK",
+				PriceID:  "price_1PXCP6CurvtCrm27wdWxYtC9",
 				Quantity: 10,
 			},
 			"1": {
 				ID:       "1",
 				Name:     "Cheese Burger",
-				PriceID:  "price_1PA7xYRoHcnwnsLn4CrfWAvG",
+				PriceID:  "price_1PXCLBCurvtCrm27fJwKdjU4",
 				Quantity: 20,
 			},
 		},

@@ -18,86 +18,158 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// OrderSeriviceClient is the client API for OrderSerivice service.
+// OrderServiceClient is the client API for OrderService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type OrderSeriviceClient interface {
+type OrderServiceClient interface {
 	CreateOrder(ctx context.Context, in *CreateOrderRequest, opts ...grpc.CallOption) (*Order, error)
+	GetOrder(ctx context.Context, in *GetOrderRequest, opts ...grpc.CallOption) (*Order, error)
+	UpdateOrder(ctx context.Context, in *Order, opts ...grpc.CallOption) (*Order, error)
 }
 
-type orderSeriviceClient struct {
+type orderServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewOrderSeriviceClient(cc grpc.ClientConnInterface) OrderSeriviceClient {
-	return &orderSeriviceClient{cc}
+func NewOrderServiceClient(cc grpc.ClientConnInterface) OrderServiceClient {
+	return &orderServiceClient{cc}
 }
 
-func (c *orderSeriviceClient) CreateOrder(ctx context.Context, in *CreateOrderRequest, opts ...grpc.CallOption) (*Order, error) {
+func (c *orderServiceClient) CreateOrder(ctx context.Context, in *CreateOrderRequest, opts ...grpc.CallOption) (*Order, error) {
 	out := new(Order)
-	err := c.cc.Invoke(ctx, "/api.OrderSerivice/CreateOrder", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/api.OrderService/CreateOrder", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// OrderSeriviceServer is the server API for OrderSerivice service.
-// All implementations must embed UnimplementedOrderSeriviceServer
+func (c *orderServiceClient) GetOrder(ctx context.Context, in *GetOrderRequest, opts ...grpc.CallOption) (*Order, error) {
+	out := new(Order)
+	err := c.cc.Invoke(ctx, "/api.OrderService/GetOrder", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *orderServiceClient) UpdateOrder(ctx context.Context, in *Order, opts ...grpc.CallOption) (*Order, error) {
+	out := new(Order)
+	err := c.cc.Invoke(ctx, "/api.OrderService/UpdateOrder", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// OrderServiceServer is the server API for OrderService service.
+// All implementations must embed UnimplementedOrderServiceServer
 // for forward compatibility
-type OrderSeriviceServer interface {
+type OrderServiceServer interface {
 	CreateOrder(context.Context, *CreateOrderRequest) (*Order, error)
-	mustEmbedUnimplementedOrderSeriviceServer()
+	GetOrder(context.Context, *GetOrderRequest) (*Order, error)
+	UpdateOrder(context.Context, *Order) (*Order, error)
+	mustEmbedUnimplementedOrderServiceServer()
 }
 
-// UnimplementedOrderSeriviceServer must be embedded to have forward compatible implementations.
-type UnimplementedOrderSeriviceServer struct {
+// UnimplementedOrderServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedOrderServiceServer struct {
 }
 
-func (UnimplementedOrderSeriviceServer) CreateOrder(context.Context, *CreateOrderRequest) (*Order, error) {
+func (UnimplementedOrderServiceServer) CreateOrder(context.Context, *CreateOrderRequest) (*Order, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateOrder not implemented")
 }
-func (UnimplementedOrderSeriviceServer) mustEmbedUnimplementedOrderSeriviceServer() {}
+func (UnimplementedOrderServiceServer) GetOrder(context.Context, *GetOrderRequest) (*Order, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetOrder not implemented")
+}
+func (UnimplementedOrderServiceServer) UpdateOrder(context.Context, *Order) (*Order, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateOrder not implemented")
+}
+func (UnimplementedOrderServiceServer) mustEmbedUnimplementedOrderServiceServer() {}
 
-// UnsafeOrderSeriviceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to OrderSeriviceServer will
+// UnsafeOrderServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to OrderServiceServer will
 // result in compilation errors.
-type UnsafeOrderSeriviceServer interface {
-	mustEmbedUnimplementedOrderSeriviceServer()
+type UnsafeOrderServiceServer interface {
+	mustEmbedUnimplementedOrderServiceServer()
 }
 
-func RegisterOrderSeriviceServer(s grpc.ServiceRegistrar, srv OrderSeriviceServer) {
-	s.RegisterService(&OrderSerivice_ServiceDesc, srv)
+func RegisterOrderServiceServer(s grpc.ServiceRegistrar, srv OrderServiceServer) {
+	s.RegisterService(&OrderService_ServiceDesc, srv)
 }
 
-func _OrderSerivice_CreateOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _OrderService_CreateOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateOrderRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OrderSeriviceServer).CreateOrder(ctx, in)
+		return srv.(OrderServiceServer).CreateOrder(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.OrderSerivice/CreateOrder",
+		FullMethod: "/api.OrderService/CreateOrder",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OrderSeriviceServer).CreateOrder(ctx, req.(*CreateOrderRequest))
+		return srv.(OrderServiceServer).CreateOrder(ctx, req.(*CreateOrderRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// OrderSerivice_ServiceDesc is the grpc.ServiceDesc for OrderSerivice service.
+func _OrderService_GetOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOrderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrderServiceServer).GetOrder(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.OrderService/GetOrder",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrderServiceServer).GetOrder(ctx, req.(*GetOrderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OrderService_UpdateOrder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Order)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OrderServiceServer).UpdateOrder(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.OrderService/UpdateOrder",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OrderServiceServer).UpdateOrder(ctx, req.(*Order))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// OrderService_ServiceDesc is the grpc.ServiceDesc for OrderService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var OrderSerivice_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "api.OrderSerivice",
-	HandlerType: (*OrderSeriviceServer)(nil),
+var OrderService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "api.OrderService",
+	HandlerType: (*OrderServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "CreateOrder",
-			Handler:    _OrderSerivice_CreateOrder_Handler,
+			Handler:    _OrderService_CreateOrder_Handler,
+		},
+		{
+			MethodName: "GetOrder",
+			Handler:    _OrderService_GetOrder_Handler,
+		},
+		{
+			MethodName: "UpdateOrder",
+			Handler:    _OrderService_UpdateOrder_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

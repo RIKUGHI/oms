@@ -17,6 +17,15 @@ func NewService(store OrdersStore, gateway gateway.StockGateway) *service {
 	return &service{store, gateway}
 }
 
+func (s *service) GetOrder(ctx context.Context, p *pb.GetOrderRequest) (*pb.Order, error) {
+	o, err := s.store.Get(ctx, p.OrderID, p.CustomerID)
+	if err != nil {
+		return nil, err
+	}
+
+	return o.ToProto(), nil
+}
+
 func (s *service) CreateOrder(ctx context.Context, p *pb.CreateOrderRequest, items []*pb.Item) (*pb.Order, error) {
 	id, err := s.store.Create(ctx, Order{
 		CustomerID:  p.CustomerID,
@@ -76,4 +85,13 @@ func mergeItemsQuantities(items []*pb.ItemsWithQuantity) []*pb.ItemsWithQuantity
 	}
 
 	return merged
+}
+
+func (s *service) UpdateOrder(ctx context.Context, o *pb.Order) (*pb.Order, error) {
+	err := s.store.Update(ctx, o.ID, o)
+	if err != nil {
+		return nil, err
+	}
+
+	return o, nil
 }

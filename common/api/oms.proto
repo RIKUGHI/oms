@@ -12,8 +12,15 @@ message Order {
   string PaymentLink = 5;
 }
 
-service OrderSerivice {
+service OrderService {
   rpc CreateOrder(CreateOrderRequest) returns (Order);
+  rpc GetOrder(GetOrderRequest) returns (Order);
+  rpc UpdateOrder(Order) returns (Order);
+}
+
+message GetOrderRequest {
+  string OrderID = 1;
+  string CustomerID = 2;
 }
 
 message Item {

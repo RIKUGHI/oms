@@ -10,6 +10,7 @@ import (
 	"time"
 
 	common "github.com/rikughi/commons"
+	"github.com/rikughi/commons/broker"
 	"github.com/rikughi/commons/discovery"
 	"github.com/rikughi/commons/discovery/consul"
 	"github.com/rikughi/omsv2-orders/gateway"
@@ -23,6 +24,10 @@ var (
 	serviceName = "orders"
 	port        = 2000
 	consulAddr  = common.EnvString("CONSUL_ADDR", "localhost:8500")
+	amqpUser    = common.EnvString("RABBITMQ_USER", "guest")
+	amqpPass    = common.EnvString("RABBITMQ_PASS", "guest")
+	amqpHost    = common.EnvString("RABBITMQ_HOST", "localhost")
+	amqpPort    = common.EnvString("RABBITMQ_PORT", "5672")
 	mongoUser   = common.EnvString("MONGO_DB_USER", "root")
 	mongoPass   = common.EnvString("MONGO_DB_PASS", "example")
 	mongoAddr   = common.EnvString("MONGO_DB_HOST", "localhost:27017")
@@ -56,6 +61,12 @@ func main() {
 
 	defer registry.Deregister(ctx, instanceID, serviceName)
 
+	ch, close := broker.Connect(amqpUser, amqpPass, amqpHost, amqpPort)
+	defer func() {
+		close()
+		ch.Close()
+	}()
+
 	// mongo db conn
 	uri := fmt.Sprintf("mongodb://%s:%s@%s", mongoUser, mongoPass, mongoAddr)
 	mongoClient, err := connectToMongoDB(uri)
@@ -76,7 +87,10 @@ func main() {
 
 	store := NewStore(mongoClient)
 	svc := NewService(store, gateway)
-	NewGRPCHandler(grpcServer, svc)
+	NewGRPCHandler(grpcServer, svc, ch)
+
+	consumer := NewConsumer(svc)
+	go consumer.Listen(ch)
 
 	log.Println("GRPC Server Started at ", grpcAddr)
 
