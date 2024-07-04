@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
 	"net"
 	"strconv"
 	"time"
@@ -17,6 +16,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
 
@@ -31,11 +31,21 @@ var (
 	mongoUser   = common.EnvString("MONGO_DB_USER", "root")
 	mongoPass   = common.EnvString("MONGO_DB_PASS", "example")
 	mongoAddr   = common.EnvString("MONGO_DB_HOST", "localhost:27017")
+	jaegerAddr  = common.EnvString("JAEGER_ADDR", "localhost:4318")
 )
 
 func main() {
 	flag.IntVar(&port, "port", port, "GRPC Port")
 	flag.Parse()
+
+	logger, _ := zap.NewProduction()
+	defer logger.Sync()
+
+	zap.ReplaceGlobals(logger)
+
+	if err := common.SetGlobalTracer(context.TODO(), serviceName, jaegerAddr); err != nil {
+		logger.Fatal("could set global tracer", zap.Error(err))
+	}
 
 	registry, err := consul.NewRegistery(consulAddr)
 	if err != nil {
@@ -53,7 +63,7 @@ func main() {
 	go func() {
 		for {
 			if err := registry.HealthCheck(instanceID, serviceName); err != nil {
-				log.Fatal("failed to health check")
+				logger.Fatal("failed to health check", zap.Error(err))
 			}
 			time.Sleep(time.Second * 1)
 		}
@@ -71,15 +81,14 @@ func main() {
 	uri := fmt.Sprintf("mongodb://%s:%s@%s", mongoUser, mongoPass, mongoAddr)
 	mongoClient, err := connectToMongoDB(uri)
 	if err != nil {
-		// logger.Fatal("failed to connect to mongo db", zap.Error(err))
-		log.Fatal("failed to connect to mongo db")
+		logger.Fatal("failed to connect to mongo db", zap.Error(err))
 	}
 
 	grpcServer := grpc.NewServer()
 
 	l, err := net.Listen("tcp", grpcAddr)
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		logger.Fatal("failed to listen: %v", zap.Error(err))
 	}
 	defer l.Close()
 
@@ -87,15 +96,17 @@ func main() {
 
 	store := NewStore(mongoClient)
 	svc := NewService(store, gateway)
-	NewGRPCHandler(grpcServer, svc, ch)
+	svcWithTelemetry := NewTelemetryMiddleware(svc)
+	svcWithLogging := NewLoggingMiddleware(svcWithTelemetry)
+	NewGRPCHandler(grpcServer, svcWithLogging, ch)
 
 	consumer := NewConsumer(svc)
 	go consumer.Listen(ch)
 
-	log.Println("GRPC Server Started at ", grpcAddr)
+	logger.Info("GRPC Server Started at ", zap.String("port", grpcAddr))
 
 	if err := grpcServer.Serve(l); err != nil {
-		log.Fatal(err.Error())
+		logger.Fatal("Failed to serve", zap.Error(err))
 	}
 }
 
