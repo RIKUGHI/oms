@@ -27,8 +27,8 @@ var (
 	amqpHost             = common.EnvString("RABBITMQ_HOST", "localhost")
 	amqpPort             = common.EnvString("RABBITMQ_PORT", "5672")
 	consulAddr           = common.EnvString("CONSUL_ADDR", "localhost:8500")
-	stripeKey            = common.EnvString("STRIPE_KEY", "sk_test_51PXBh3CurvtCrm275UJEbk4QavAII53E5QMr6jY8vJJLTTmd80vOeKYIr6DDfDyCP4BSWhA2eztQtIjNdz29SC9u0001FHYET0")
-	endpointStripeSecret = common.EnvString("STRIPE_ENDPOINT_SECRET", "whsec_72f8640ff44b07e2184c409369339b0c6688f0873997a26c1122c786797276e1")
+	stripeKey            = common.EnvString("STRIPE_KEY", "sk_test")
+	endpointStripeSecret = common.EnvString("STRIPE_ENDPOINT_SECRET", "whsec")
 	httpAddr             = common.EnvString("HTTP_ADDR", "localhost:8081")
 )
 
